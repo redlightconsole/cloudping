@@ -5,6 +5,7 @@ import (
 	"flag"
 	"fmt"
 	"github.com/redlightconsole/cloudping"
+	"github.com/redlightconsole/cloudping/internal"
 	"github.com/redlightconsole/cloudping/internal/build"
 	"log"
 	"os"
@@ -41,6 +42,8 @@ func main() {
 		os.Exit(0)
 	}
 
+	fmt.Printf("Running latency checks with options: request type: %s, repeat: %d\n", *reqType, *count)
+
 	p := cloudping.NewPinger(*reqType, *count)
 	p.AddTarget(targets...)
 	err := p.Run(context.Background())
@@ -48,7 +51,10 @@ func main() {
 		log.Fatal(err)
 	}
 
-	for _, r := range p.Results() {
-		fmt.Println(r.Target.Provider, r.Target.CodeName, r.Pings)
+	a := internal.NewAnalysis()
+	a.AddResult(p.Results()...)
+	err = a.WriteOutput(os.Stdout)
+	if err != nil {
+		log.Fatal(err)
 	}
 }

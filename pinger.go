@@ -16,7 +16,7 @@ func init() {
 type PingResult struct {
 	Err    error
 	Target RegionTarget
-	Pings  []int64
+	Pings  []int
 }
 
 type Pinger struct {
@@ -42,7 +42,7 @@ func (p *Pinger) AddTarget(targets ...*RegionTarget) {
 }
 
 func (p *Pinger) Run(ctx context.Context) error {
-	var wg sync.WaitGroup
+	runner := NewRunner(8)
 	var reqType RequestType
 
 	switch p.reqType {
@@ -57,16 +57,16 @@ func (p *Pinger) Run(ctx context.Context) error {
 	}
 
 	for _, t := range p.targets {
-		wg.Add(1)
+		runner.Add(1)
 		go func(t *RegionTarget) {
-			defer wg.Done()
-			var pings []int64
+			defer runner.Done()
+			var pings []int
 			var reqerr error
 
 			for i := 1; i <= p.repeat; i++ {
 				// Add a 100ms timeout between requests
 				if i != 1 {
-					time.Sleep(100 * time.Millisecond)
+					time.Sleep(200 * time.Millisecond)
 				}
 				addr, err := p.formatHost(reqType, t)
 				if err != nil {
@@ -76,7 +76,7 @@ func (p *Pinger) Run(ctx context.Context) error {
 
 				req := NewRequest()
 				d, err := req.Do(fmt.Sprintf("cloudping/%s", build.String()), addr, reqType)
-				pings = append(pings, d.Milliseconds())
+				pings = append(pings, int(d.Milliseconds()))
 				reqerr = err
 			}
 
@@ -90,7 +90,7 @@ func (p *Pinger) Run(ctx context.Context) error {
 			})
 		}(t)
 	}
-	wg.Wait()
+	runner.Wait()
 	return nil
 }
 
