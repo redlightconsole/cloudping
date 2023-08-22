@@ -22,7 +22,7 @@ all: fmt lint test build go.mod
 .PHONY: build
 build:
 	go generate ./...
-	go build -v -ldflags="-s -w -X 'github.com/sundowndev/cloudping/internal/build.version=${GIT_TAG}' -X 'github.com/sundowndev/cloudping/internal/build.commit=${GIT_COMMIT}'" -o ./bin/cloudping .
+	go build -v -ldflags="-s -w -X 'github.com/sundowndev/cloudping/internal/build.version=${GIT_TAG}' -X 'github.com/sundowndev/cloudping/internal/build.commit=${GIT_COMMIT}'" -o ./bin/cloudping ./cmd/cloudping
 
 .PHONY: test
 test:
