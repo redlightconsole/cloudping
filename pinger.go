@@ -42,13 +42,11 @@ func (p *Pinger) AddTarget(targets ...*RegionTarget) {
 }
 
 func (p *Pinger) Run(ctx context.Context) error {
-	runner := NewRunner(8)
+	runner := NewRunner(10)
 	var reqType RequestType
 
 	switch p.reqType {
 	case "http":
-		reqType = RequestTypeHTTP
-	case "https":
 		reqType = RequestTypeHTTP
 	case "tcp":
 		reqType = RequestTypeTCP
@@ -103,7 +101,7 @@ func (p *Pinger) formatHost(reqType RequestType, t *RegionTarget) (string, error
 
 	switch reqType {
 	case RequestTypeHTTP:
-		addr = fmt.Sprintf("https://%s?x=%s", t.Host, mkRandomString(13))
+		addr = t.GetURL()
 	case RequestTypeTCP:
 		ip, err := t.GetIP()
 		if err != nil {

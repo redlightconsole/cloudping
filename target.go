@@ -37,6 +37,11 @@ func GetAllTargets() []*RegionTarget {
 	return targets
 }
 
+// GetURL return HTTP URL for target
+func (t *RegionTarget) GetURL() string {
+	return fmt.Sprintf("http://%s?x=%s", t.Host, mkRandomString(13))
+}
+
 // GetIP return IP for target
 func (t *RegionTarget) GetIP() (*net.TCPAddr, error) {
 	return net.ResolveTCPAddr("tcp4", fmt.Sprintf("%s:80", t.Host))

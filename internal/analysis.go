@@ -4,10 +4,12 @@ import (
 	"fmt"
 	"github.com/fatih/color"
 	"github.com/redlightconsole/cloudping"
+	"github.com/redlightconsole/cloudping/internal/stripansi"
 	"github.com/rodaine/table"
 	"io"
 	"sort"
 	"strings"
+	"unicode/utf8"
 )
 
 type Analysis struct {
@@ -26,9 +28,12 @@ func (a *Analysis) WriteOutput(w io.Writer) error {
 	headerFmt := color.New(color.FgGreen, color.Underline).SprintfFunc()
 	columnFmt := color.New(color.FgYellow).SprintfFunc()
 
-	tbl := table.New("Provider", "Region", "Min", "Max", "Avg")
-	tbl.WithHeaderFormatter(headerFmt).WithFirstColumnFormatter(columnFmt)
+	tbl := table.New("Provider", "Region name", "Code", "Min", "Max", "Avg")
 	tbl.WithWriter(w)
+	tbl.WithHeaderFormatter(headerFmt).WithFirstColumnFormatter(columnFmt)
+	tbl.WithWidthFunc(func(s string) int {
+		return utf8.RuneCountInString(stripansi.Strip(s))
+	})
 
 	// Sort results
 	sort.SliceStable(a.results, func(i, j int) bool {
@@ -57,8 +62,8 @@ func (a *Analysis) WriteOutput(w io.Writer) error {
 		for _, lat := range r.Pings {
 			avg += lat
 		}
-		avg = avg / len(r.Pings)
-		tbl.AddRow(strings.ToUpper(r.Target.Provider), r.Target.CodeName, a.latencyValueColor(min), a.latencyValueColor(max), a.latencyValueColor(avg))
+		avg /= len(r.Pings)
+		tbl.AddRow(strings.ToUpper(r.Target.Provider), r.Target.Name, r.Target.CodeName, a.latencyValueColor(min), a.latencyValueColor(max), a.latencyValueColor(avg))
 	}
 	_, _ = fmt.Fprintf(w, "\n")
 	tbl.Print()
@@ -66,10 +71,10 @@ func (a *Analysis) WriteOutput(w io.Writer) error {
 }
 
 func (a *Analysis) latencyValueColor(lat int) string {
-	if lat < 50 {
+	if lat < 100 {
 		return color.GreenString("%d", lat)
 	}
-	if lat < 100 {
+	if lat < 190 {
 		return color.YellowString("%d", lat)
 	}
 	return color.RedString("%d", lat)
