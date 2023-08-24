@@ -3,8 +3,9 @@ package cloudping
 import (
 	"context"
 	"fmt"
-	"github.com/redlightconsole/cloudping/internal/build"
+	"github.com/redlightconsole/cloudping/pkg/build"
 	"math/rand"
+	"sort"
 	"sync"
 	"time"
 )
@@ -17,6 +18,22 @@ type PingResult struct {
 	Err    error
 	Target RegionTarget
 	Pings  []int
+}
+
+func (r *PingResult) Min() int {
+	return r.Pings[0]
+}
+
+func (r *PingResult) Max() int {
+	return r.Pings[len(r.Pings)-1]
+}
+
+func (r *PingResult) Average() int {
+	var avg int
+	for _, lat := range r.Pings {
+		avg += lat
+	}
+	return avg / len(r.Pings)
 }
 
 type Pinger struct {
@@ -81,11 +98,15 @@ func (p *Pinger) Run(ctx context.Context) error {
 			p.m.Lock()
 			defer p.m.Unlock()
 
-			p.results = append(p.results, PingResult{
+			result := PingResult{
 				Err:    reqerr,
 				Target: *t,
 				Pings:  pings,
-			})
+			}
+			// Sort values in ascending order
+			sort.Ints(result.Pings)
+
+			p.results = append(p.results, result)
 		}(t)
 	}
 	runner.Wait()

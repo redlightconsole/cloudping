@@ -1,10 +1,10 @@
-package internal
+package analysis
 
 import (
 	"fmt"
 	"github.com/fatih/color"
 	"github.com/redlightconsole/cloudping"
-	"github.com/redlightconsole/cloudping/internal/stripansi"
+	"github.com/redlightconsole/cloudping/pkg/stripansi"
 	"github.com/rodaine/table"
 	"io"
 	"sort"
@@ -16,12 +16,13 @@ type Analysis struct {
 	results []cloudping.PingResult
 }
 
-func NewAnalysis() *Analysis {
+func New() *Analysis {
 	return &Analysis{results: make([]cloudping.PingResult, 0)}
 }
 
-func (a *Analysis) AddResult(results ...cloudping.PingResult) {
+func (a *Analysis) AddResult(results ...cloudping.PingResult) *Analysis {
 	a.results = append(a.results, results...)
+	return a
 }
 
 func (a *Analysis) WriteOutput(w io.Writer) error {
@@ -37,9 +38,7 @@ func (a *Analysis) WriteOutput(w io.Writer) error {
 
 	// Sort results
 	sort.SliceStable(a.results, func(i, j int) bool {
-		sort.Ints(a.results[i].Pings)
-		sort.Ints(a.results[j].Pings)
-		return a.results[i].Pings[0] < a.results[j].Pings[0]
+		return a.results[i].Average() < a.results[j].Average()
 	})
 
 	for _, r := range a.results {
@@ -51,19 +50,7 @@ func (a *Analysis) WriteOutput(w io.Writer) error {
 			continue
 		}
 
-		var (
-			min int
-			max int
-			avg int
-		)
-		sort.Ints(r.Pings)
-		min = r.Pings[0]
-		max = r.Pings[len(r.Pings)-1]
-		for _, lat := range r.Pings {
-			avg += lat
-		}
-		avg /= len(r.Pings)
-		tbl.AddRow(strings.ToUpper(r.Target.Provider), r.Target.Name, r.Target.CodeName, a.latencyValueColor(min), a.latencyValueColor(max), a.latencyValueColor(avg))
+		tbl.AddRow(strings.ToUpper(r.Target.Provider), r.Target.Name, r.Target.CodeName, a.latencyValueColor(r.Min()), a.latencyValueColor(r.Max()), a.latencyValueColor(r.Average()))
 	}
 	_, _ = fmt.Fprintf(w, "\n")
 	tbl.Print()

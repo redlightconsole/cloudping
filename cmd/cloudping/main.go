@@ -5,8 +5,8 @@ import (
 	"flag"
 	"fmt"
 	"github.com/redlightconsole/cloudping"
-	"github.com/redlightconsole/cloudping/internal"
-	"github.com/redlightconsole/cloudping/internal/build"
+	"github.com/redlightconsole/cloudping/pkg/analysis"
+	"github.com/redlightconsole/cloudping/pkg/build"
 	"os"
 )
 
@@ -15,7 +15,7 @@ var (
 	reqType     = flag.String("t", "tcp", "Ping transport client: tcp,http (default is tcp)")
 	showVer     = flag.Bool("v", false, "Show version")
 	listRegions = flag.Bool("list-regions", false, "Show list of regions")
-	provider    = flag.String("provider", "", "Cloud provider to ping (aws, gcp, azure, ...), leave empty to select all")
+	provider    = flag.String("p", "", "Cloud provider to ping (aws, gcp, azure, ...), leave empty to select all")
 )
 
 func main() {
@@ -36,7 +36,7 @@ func main() {
 
 	if *listRegions {
 		for _, t := range targets {
-			fmt.Println(t.CodeName)
+			fmt.Printf("%s-%s\n", t.Provider, t.CodeName)
 		}
 		os.Exit(0)
 	}
@@ -51,9 +51,7 @@ func main() {
 		os.Exit(0)
 	}
 
-	a := internal.NewAnalysis()
-	a.AddResult(p.Results()...)
-	err = a.WriteOutput(os.Stdout)
+	err = analysis.New().AddResult(p.Results()...).WriteOutput(os.Stdout)
 	if err != nil {
 		fmt.Printf("Error: %s\n", err)
 		os.Exit(0)
