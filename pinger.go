@@ -4,15 +4,10 @@ import (
 	"context"
 	"fmt"
 	"github.com/redlightconsole/cloudping/pkg/build"
-	"math/rand"
 	"sort"
 	"sync"
 	"time"
 )
-
-func init() {
-	rand.Seed(time.Now().UnixNano())
-}
 
 type PingResult struct {
 	Err    error
