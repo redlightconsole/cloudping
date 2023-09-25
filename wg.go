@@ -4,19 +4,19 @@ import (
 	"sync"
 )
 
-// A Runner waits for a collection of goroutines to finish.
+// A WaitGroupLimit waits for a collection of goroutines to finish.
 // It's wrapper around the waitgroup struct to add concurrency limit.
-type Runner struct {
+type WaitGroupLimit struct {
 	ch chan int
 	wg *sync.WaitGroup
 }
 
-// NewRunner creates a new runner for concurrency tasks
-func NewRunner(limit int) *Runner {
+// NewWaitGroupLimit creates a new runner for concurrency tasks
+func NewWaitGroupLimit(limit int) *WaitGroupLimit {
 	if limit <= 0 {
 		limit = 1
 	}
-	return &Runner{
+	return &WaitGroupLimit{
 		ch: make(chan int, limit), // buffer chan to limit concurrency
 		wg: &sync.WaitGroup{},
 	}
@@ -24,7 +24,7 @@ func NewRunner(limit int) *Runner {
 
 // Add adds delta, which may be negative, to the WaitGroup counter.
 // See sync.WaitGroup for more info.
-func (wgl *Runner) Add(delta int) {
+func (wgl *WaitGroupLimit) Add(delta int) {
 	for i := 0; i < delta; i++ {
 		wgl.ch <- 1
 		wgl.wg.Add(1)
@@ -32,13 +32,13 @@ func (wgl *Runner) Add(delta int) {
 }
 
 // Done decrements the WaitGroup counter by one.
-func (wgl *Runner) Done() {
+func (wgl *WaitGroupLimit) Done() {
 	wgl.wg.Done()
 	<-wgl.ch
 }
 
 // Wait blocks until the WaitGroup counter is zero.
-func (wgl *Runner) Wait() {
+func (wgl *WaitGroupLimit) Wait() {
 	close(wgl.ch)
 	wgl.wg.Wait()
 }
