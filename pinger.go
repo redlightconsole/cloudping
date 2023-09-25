@@ -32,20 +32,20 @@ func (r *PingResult) Average() int {
 }
 
 type Pinger struct {
-	m       *sync.Mutex
-	reqType string
-	repeat  int
-	targets []*RegionTarget
-	results []PingResult
+	m                *sync.Mutex
+	repeat           int
+	concurrencyLimit int
+	targets          []*RegionTarget
+	results          []PingResult
 }
 
-func NewPinger(reqType string, c int) *Pinger {
+func NewPinger(c, concurrencyLimit int) *Pinger {
 	return &Pinger{
-		m:       &sync.Mutex{},
-		reqType: reqType,
-		repeat:  c,
-		targets: make([]*RegionTarget, 0),
-		results: make([]PingResult, 0),
+		m:                &sync.Mutex{},
+		repeat:           c,
+		concurrencyLimit: concurrencyLimit,
+		targets:          make([]*RegionTarget, 0),
+		results:          make([]PingResult, 0),
 	}
 }
 
@@ -54,17 +54,7 @@ func (p *Pinger) AddTarget(targets ...*RegionTarget) {
 }
 
 func (p *Pinger) Run(ctx context.Context) error {
-	runner := NewRunner(10)
-	var reqType RequestType
-
-	switch p.reqType {
-	case "http":
-		reqType = RequestTypeHTTP
-	case "tcp":
-		reqType = RequestTypeTCP
-	default:
-		return fmt.Errorf("unexpected request type %s", p.reqType)
-	}
+	runner := NewWaitGroupLimit(p.concurrencyLimit)
 
 	for _, t := range p.targets {
 		runner.Add(1)
@@ -78,14 +68,14 @@ func (p *Pinger) Run(ctx context.Context) error {
 				if i != 1 {
 					time.Sleep(200 * time.Millisecond)
 				}
-				addr, err := p.formatHost(reqType, t)
+				addr, err := p.formatHost(t.ReqType, t)
 				if err != nil {
 					reqerr = err
-					return
+					continue
 				}
 
 				req := NewRequest()
-				d, err := req.Do(fmt.Sprintf("cloudping/%s", build.String()), addr, reqType)
+				d, err := req.Do(fmt.Sprintf("cloudping/%s", build.String()), addr, t.ReqType)
 				pings = append(pings, int(d.Milliseconds()))
 				reqerr = err
 			}

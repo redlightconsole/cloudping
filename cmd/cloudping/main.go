@@ -43,7 +43,7 @@ func main() {
 
 	fmt.Printf("Running latency checks with options: request type: %s, repeat: %d\n", *reqType, *count)
 
-	p := cloudping.NewPinger(*reqType, *count)
+	p := cloudping.NewPinger(*count, 10)
 	p.AddTarget(targets...)
 	err := p.Run(context.Background())
 	if err != nil {
