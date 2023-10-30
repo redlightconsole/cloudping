@@ -11,7 +11,7 @@ import (
 )
 
 var (
-	count       = flag.Int("c", 3, "Number of count")
+	count       = flag.Int("c", 3, "Number of requests to send for each region")
 	reqType     = flag.String("t", "tcp", "Ping transport client: tcp,http (default is tcp)")
 	showVer     = flag.Bool("v", false, "Show version")
 	listRegions = flag.Bool("list-regions", false, "Show list of regions")
