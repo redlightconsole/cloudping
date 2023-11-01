@@ -15,7 +15,7 @@ var (
 	reqType     = flag.String("t", "tcp", "Ping transport client: tcp,http (default is tcp)")
 	showVer     = flag.Bool("v", false, "Show version")
 	listRegions = flag.Bool("list-regions", false, "Show list of regions")
-	provider    = flag.String("p", "", "Cloud provider to ping (aws, gcp, azure, ...), leave empty to select all")
+	provider    = flag.String("p", "all", "Cloud provider to ping (aws, azure, ...), leave empty to select all")
 )
 
 func main() {
@@ -28,7 +28,7 @@ func main() {
 
 	targets := make([]*cloudping.RegionTarget, 0)
 	for _, t := range cloudping.GetAllTargets() {
-		if *provider != "" && *provider != t.Provider {
+		if *provider != "all" && *provider != t.Provider {
 			continue
 		}
 		targets = append(targets, t)
@@ -41,11 +41,17 @@ func main() {
 		os.Exit(0)
 	}
 
-	fmt.Printf("Running latency checks with options: request type: %s, repeat: %d\n", *reqType, *count)
+	requestType, err := cloudping.ParseRequestType(*reqType)
+	if err != nil {
+		fmt.Printf("Error: %s\n", err)
+		os.Exit(0)
+	}
 
-	p := cloudping.NewPinger(*count, 10)
+	fmt.Printf("Running latency checks with options: request type: %s, repeat: %d, provider(s): %s\n", *reqType, *count, *provider)
+
+	p := cloudping.NewPinger(*count, 10, requestType)
 	p.AddTarget(targets...)
-	err := p.Run(context.Background())
+	err = p.Run(context.Background())
 	if err != nil {
 		fmt.Printf("Error: %s\n", err)
 		os.Exit(0)
