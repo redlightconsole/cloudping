@@ -1,8 +1,10 @@
 package cloudping
 
 import (
+	"fmt"
 	"net"
 	"net/http"
+	"strings"
 	"time"
 )
 
@@ -35,6 +37,16 @@ type TCPRequester interface {
 type Request struct {
 	httpClient HTTPRequester
 	tcpClient  TCPRequester
+}
+
+func ParseRequestType(s string) (RequestType, error) {
+	switch strings.ToLower(s) {
+	case "http":
+		return RequestTypeHTTP, nil
+	case "tcp":
+		return RequestTypeTCP, nil
+	}
+	return 0, fmt.Errorf("request type not recognized: %s", s)
 }
 
 // NewRequest creates a new instance of Request

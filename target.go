@@ -16,16 +16,14 @@ type RegionTarget struct {
 	Name     string
 	CodeName string
 	Uri      string
-	ReqType  RequestType
 }
 
-func NewRegionTarget(provider, regionName, regionCodeName, uri string, reqType RequestType) *RegionTarget {
+func NewRegionTarget(provider, regionName, regionCodeName, uri string) *RegionTarget {
 	return &RegionTarget{
 		Provider: provider,
 		Name:     regionName,
 		CodeName: regionCodeName,
 		Uri:      uri,
-		ReqType:  reqType,
 	}
 }
 

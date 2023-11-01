@@ -37,15 +37,17 @@ type Pinger struct {
 	concurrencyLimit int
 	targets          []*RegionTarget
 	results          []PingResult
+	reqType          RequestType
 }
 
-func NewPinger(c, concurrencyLimit int) *Pinger {
+func NewPinger(c, concurrencyLimit int, reqType RequestType) *Pinger {
 	return &Pinger{
 		m:                &sync.Mutex{},
 		repeat:           c,
 		concurrencyLimit: concurrencyLimit,
 		targets:          make([]*RegionTarget, 0),
 		results:          make([]PingResult, 0),
+		reqType:          reqType,
 	}
 }
 
@@ -64,18 +66,18 @@ func (p *Pinger) Run(ctx context.Context) error {
 			var reqerr error
 
 			for i := 1; i <= p.repeat; i++ {
-				// Add a 100ms timeout between requests
+				// Add a 200ms timeout between requests
 				if i != 1 {
 					time.Sleep(200 * time.Millisecond)
 				}
-				addr, err := p.formatHost(t.ReqType, t)
+				addr, err := p.formatHost(p.reqType, t)
 				if err != nil {
 					reqerr = err
 					continue
 				}
 
 				req := NewRequest()
-				d, err := req.Do(fmt.Sprintf("cloudping/%s", build.String()), addr, t.ReqType)
+				d, err := req.Do(fmt.Sprintf("cloudping/%s", build.String()), addr, p.reqType)
 				pings = append(pings, int(d.Milliseconds()))
 				reqerr = err
 			}
