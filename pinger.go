@@ -3,7 +3,6 @@ package cloudping
 import (
 	"context"
 	"fmt"
-	"github.com/redlightconsole/cloudping/pkg/build"
 	"sort"
 	"sync"
 	"time"
@@ -38,6 +37,7 @@ type Pinger struct {
 	targets          []*RegionTarget
 	results          []PingResult
 	reqType          RequestType
+	UserAgent        string
 }
 
 func NewPinger(c, concurrencyLimit int, reqType RequestType) *Pinger {
@@ -48,7 +48,12 @@ func NewPinger(c, concurrencyLimit int, reqType RequestType) *Pinger {
 		targets:          make([]*RegionTarget, 0),
 		results:          make([]PingResult, 0),
 		reqType:          reqType,
+		UserAgent:        "cloudping",
 	}
+}
+
+func (p *Pinger) SetUserAgent(ua string) {
+	p.UserAgent = ua
 }
 
 func (p *Pinger) AddTarget(targets ...*RegionTarget) {
@@ -77,7 +82,7 @@ func (p *Pinger) Run(ctx context.Context) error {
 				}
 
 				req := NewRequest()
-				d, err := req.Do(fmt.Sprintf("cloudping/%s", build.String()), addr, p.reqType)
+				d, err := req.Do(p.UserAgent, addr, p.reqType)
 				pings = append(pings, int(d.Milliseconds()))
 				reqerr = err
 			}

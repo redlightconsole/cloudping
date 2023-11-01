@@ -5,9 +5,10 @@ import (
 	"flag"
 	"fmt"
 	"github.com/redlightconsole/cloudping"
+	"github.com/redlightconsole/cloudping/cmd/cloudping/internal/build"
 	"github.com/redlightconsole/cloudping/pkg/analysis"
-	"github.com/redlightconsole/cloudping/pkg/build"
 	"os"
+	"time"
 )
 
 var (
@@ -51,6 +52,9 @@ func main() {
 
 	p := cloudping.NewPinger(*count, 10, requestType)
 	p.AddTarget(targets...)
+	p.SetUserAgent(fmt.Sprintf("cloudping/%s", build.String()))
+
+	starttime := time.Now()
 	err = p.Run(context.Background())
 	if err != nil {
 		fmt.Printf("Error: %s\n", err)
@@ -62,4 +66,6 @@ func main() {
 		fmt.Printf("Error: %s\n", err)
 		os.Exit(0)
 	}
+
+	fmt.Printf("\nDONE in %s\n", time.Since(starttime).Round(time.Millisecond).String())
 }
